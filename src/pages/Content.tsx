@@ -52,7 +52,6 @@ export function Beer() {
 }
 
 export const Restaurant = () => (<><PageHead title="Ресторан" lead="Гастрономия с характером." /><FeatureSplit f={features.restaurant} /></>)
-export const Tours = () => (<><PageHead title="Экскурсии и дегустации" /><FeatureSplit f={features.tours} /></>)
 export const Events = () => (<><PageHead title="События и пространства" /><FeatureSplit f={features.events} /></>)
 export const Shop = () => (<><PageHead title="Магазин и услуги" lead="Вкус, который можно забрать с собой." /><section className="wrap py-12"><ShopGrid /></section></>)
 export const Contacts = () => (<><PageHead title="Контакты" /><section className="wrap py-12"><ContactCard /></section></>)

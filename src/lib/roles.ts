@@ -21,6 +21,9 @@ const matrix = {
   'users:manage': ['admin'],
   'applications:review': ['admin'],
   'invites:manage': ['admin'],
+  'rakurs:view': ['sommelier', 'manager', 'admin'],
+  'rakurs:attend': ['sommelier', 'manager', 'admin'],
+  'rakurs:manage': ['manager', 'admin'],
 } as const satisfies Record<string, readonly Role[]>
 
 export type Permission = keyof typeof matrix

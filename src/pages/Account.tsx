@@ -122,6 +122,7 @@ export function Account() {
           {user?.username && <p className="text-charcoal/70">@{user.username}</p>}
           <div className="mt-5 flex gap-3">
             <Link to="/register" className="btn-dark">Изменить</Link>
+            <Link to="/passport" className="btn-dark">Паспорт</Link>
             {isStaff(user?.role) && <Link to="/staff" className="btn-dark">Кабинет</Link>}
             {!isStaff(user?.role) && <Link to="/apply" className="btn-dark">Работать у нас</Link>}
             <button className="btn-dark" onClick={() => void logout()}>Выйти</button>

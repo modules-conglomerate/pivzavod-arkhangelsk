@@ -2,12 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomBytes } from 'node:crypto'
 import {
   insert, log, remove, select, update,
-  type ApplicationRow, type BeerRow, type BookingRow, type InviteRow, type UserRow,
+  type ApplicationRow, type BeerRow, type BookingRow, type InviteRow, type SignupRow, type SlotRow, type UserRow,
 } from '../_lib/db'
 import { authorize } from '../_lib/guard'
 import { can, rank } from '../../src/lib/roles'
 import {
-  beerNotesSchema, beerSchema, bookingPatchSchema, decisionSchema, inviteCreateSchema, userPatchSchema,
+  attendanceSchema, beerNotesSchema, beerSchema, bookingPatchSchema, decisionSchema, inviteCreateSchema, slotCreateSchema, slotPatchSchema, userPatchSchema,
 } from '../../src/lib/schemas'
 
 type Req = VercelRequest
@@ -24,6 +24,8 @@ export default async function handler(req: Req, res: Res) {
       case 'applications': return await applications(req, res)
       case 'invites': return await invites(req, res)
       case 'beers': return await beers(req, res)
+      case 'slots': return await slots(req, res)
+      case 'attendance': return await attendance(req, res)
       default: return bad(res, 'Не найдено', 404)
     }
   } catch (e) {
@@ -40,7 +42,7 @@ async function bookings(req: Req, res: Res) {
 
   if (req.method === 'GET') {
     let list = await select<BookingRow>('bookings', {}, { order: 'date' })
-    // Сомелье видит экскурсии и заказы своего пива: свободные и назначенные на него.
+    // Сомелье видит заказы своего пива: свободные и назначенные на него.
     if (!all) list = list.filter((b) => b.assigned_to === me.telegram_id || (b.assigned_to === null && ['tour', 'custom-beer'].includes(b.kind)))
     const byId = new Map((await select<UserRow>('users')).map((u) => [u.telegram_id, u]))
     return res.json({ bookings: list.map((b) => ({ ...b, guest: guestOf(byId.get(b.telegram_id)) })) })
@@ -161,4 +163,67 @@ async function beers(req: Req, res: Res) {
   }
   if (req.method === 'DELETE') { await remove('beers', { id: String(req.query.id ?? '') }); return res.status(204).end() }
   return res.status(405).end()
+}
+
+async function slots(req: Req, res: Res) {
+  const me = await authorize(req, res, 'rakurs:view')
+  if (!me) return
+  const manage = can(me.role, 'rakurs:manage')
+  if (req.method === 'GET') {
+    const since = Date.now() - 30 * 86400_000
+    let list = (await select<SlotRow>('rakurs_slots', {}, { order: 'starts_at' })).filter((s) => new Date(s.starts_at).getTime() >= since)
+    if (!manage) list = list.filter((s) => s.sommelier_id === me.telegram_id)
+    const signups = await select<SignupRow>('rakurs_signups')
+    const byId = new Map((await select<UserRow>('users')).map((u) => [u.telegram_id, u]))
+    return res.json({
+      slots: list.map((s) => ({
+        ...s,
+        signups: signups.filter((x) => x.slot_id === s.id && x.status !== 'cancelled').map((x) => ({ ...x, guest: guestOf(byId.get(x.telegram_id)) })),
+      })),
+    })
+  }
+  if (!manage) return bad(res, 'Недостаточно прав', 403)
+  if (req.method === 'POST') {
+    const p = slotCreateSchema.safeParse(req.body)
+    if (!p.success) return bad(res, p.error.issues[0].message)
+    if (p.data.sommelierId !== null) {
+      const [lead] = await select<UserRow>('users', { telegram_id: p.data.sommelierId })
+      if (lead?.role !== 'sommelier') return bad(res, 'Ведущим можно назначить только сомелье')
+    }
+    const slot = await insert<SlotRow>('rakurs_slots', {
+      title: p.data.title, starts_at: p.data.startsAt, capacity: p.data.capacity, price_rub: p.data.priceRub,
+      sommelier_id: p.data.sommelierId, status: 'open', created_by: me.telegram_id,
+    })
+    await log(me.telegram_id, 'slot_created', slot.id)
+    return res.status(201).json({ slot })
+  }
+  if (req.method === 'PATCH') {
+    const p = slotPatchSchema.safeParse(req.body)
+    if (!p.success) return bad(res, p.error.issues[0].message)
+    const { id, ...patch } = p.data
+    const [slot] = await update<SlotRow>('rakurs_slots', { id }, patch)
+    if (!slot) return bad(res, 'Ракурс не найден', 404)
+    if (patch.status === 'cancelled') await update('rakurs_signups', { slot_id: id, status: 'registered' }, { status: 'cancelled' })
+    await log(me.telegram_id, 'slot_updated', id, patch)
+    return res.json({ slot })
+  }
+  return res.status(405).end()
+}
+
+// Отметка «пришёл / не пришёл»: от неё зависят визиты, попробованные сорта и достижения гостя.
+async function attendance(req: Req, res: Res) {
+  const me = await authorize(req, res, 'rakurs:attend')
+  if (!me) return
+  if (req.method !== 'PATCH') return res.status(405).end()
+  const p = attendanceSchema.safeParse(req.body)
+  if (!p.success) return bad(res, p.error.issues[0].message)
+  const [row] = await select<SignupRow>('rakurs_signups', { id: p.data.id })
+  if (!row || row.status === 'cancelled') return bad(res, 'Запись не найдена', 404)
+  const [slot] = await select<SlotRow>('rakurs_slots', { id: row.slot_id })
+  if (!slot) return bad(res, 'Ракурс не найден', 404)
+  if (!can(me.role, 'rakurs:manage') && slot.sommelier_id !== me.telegram_id) return bad(res, 'Это не ваш ракурс', 403)
+  if (p.data.status !== 'registered' && new Date(slot.starts_at) > new Date()) return bad(res, 'Ракурс ещё не начался', 409)
+  const [signup] = await update<SignupRow>('rakurs_signups', { id: row.id }, { status: p.data.status })
+  await log(me.telegram_id, `attendance_${p.data.status}`, row.id)
+  return res.json({ signup })
 }

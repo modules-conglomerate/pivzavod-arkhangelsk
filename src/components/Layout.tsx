@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Briefcase, Menu, Phone, User, X } from 'lucide-react'
+import { Award, Briefcase, Menu, Phone, User, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { contacts, nav } from '../content/site'
 import { isStaff } from '../lib/roles'
@@ -19,6 +19,7 @@ function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-4">
           <a href={`tel:${contacts.phone.replace(/[^\d+]/g, '')}`} className="hidden items-center gap-2 text-xs xl:flex"><Phone size={14} />{contacts.phone}</a>
+          {user && <Link to="/passport" className="hidden items-center gap-1 text-xs hover:text-gold sm:flex"><Award size={16} />Паспорт</Link>}
           {user && isStaff(user.role) && <Link to="/staff" className="flex items-center gap-1 text-xs text-gold"><Briefcase size={16} />Кабинет</Link>}
           <Link to={user ? '/account' : '/login'} className="flex items-center gap-1 text-xs hover:text-gold"><User size={16} />{user ? user.first_name : 'Войти'}</Link>
           <Link to="/booking" className="btn-gold hidden sm:inline-flex">Забронировать</Link>

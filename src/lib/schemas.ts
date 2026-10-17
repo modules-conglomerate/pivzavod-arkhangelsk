@@ -9,10 +9,11 @@ export const profileSchema = z.object({
 })
 export type ProfileInput = z.infer<typeof profileSchema>
 
-export const bookingKinds = ['table', 'tour', 'event', 'custom-beer'] as const
-export const bookingLabels: Record<(typeof bookingKinds)[number], string> = {
+// Запись на ракурсы идёт через расписание (/rakurs); 'tour' оставлен только для старых заявок.
+export const bookingKinds = ['table', 'event', 'custom-beer'] as const
+export const bookingLabels: Record<string, string> = {
   table: 'Столик в ресторане',
-  tour: 'Экскурсия и дегустация',
+  tour: 'Ракурс (старая заявка)',
   event: 'Событие или зал',
   'custom-beer': 'Своё пиво',
 }
@@ -79,3 +80,38 @@ export const beerSchema = z.object({
 })
 export type BeerInput = z.infer<typeof beerSchema>
 export const beerNotesSchema = beerSchema.pick({ tasting_notes: true, pairing: true })
+
+export const MAX_SET = 4
+export const rakursSignupSchema = z
+  .object({
+    slotId: z.string().min(1),
+    setBeers: z.array(z.string().min(1)).min(1, 'Выберите хотя бы один сорт для сета').max(MAX_SET, `В сете не больше ${MAX_SET} сортов`),
+    focusBeer: z.string().min(1, 'Выберите сорт, чей полный цикл хотите увидеть'),
+    guests: z.number({ invalid_type_error: 'Укажите число гостей' }).int().min(1, 'Минимум 1 гость').max(10, 'До 10 гостей в одной записи'),
+    comment: z.string().max(300, 'Не больше 300 символов').optional(),
+  })
+  .refine((v) => v.setBeers.includes(v.focusBeer), { message: 'Сорт для полного цикла должен быть в вашем сете', path: ['focusBeer'] })
+  .refine((v) => new Set(v.setBeers).size === v.setBeers.length, { message: 'Сорта в сете не должны повторяться', path: ['setBeers'] })
+export type RakursSignupInput = z.infer<typeof rakursSignupSchema>
+
+export const slotCreateSchema = z.object({
+  title: z.string().trim().min(3, 'Название слишком короткое').max(80, 'Не больше 80 символов'),
+  startsAt: z.string().datetime({ message: 'Некорректная дата' }).refine((d) => new Date(d) > new Date(), 'Дата должна быть в будущем'),
+  capacity: z.number().int().min(1, 'Минимум 1 место').max(30, 'Максимум 30 мест'),
+  priceRub: z.number().int().min(0).max(20000),
+  sommelierId: z.number().nullable(),
+})
+export const slotFormSchema = z.object({
+  title: z.string().trim().min(3, 'Название слишком короткое').max(80, 'Не больше 80 символов'),
+  startsAt: z.string().min(1, 'Укажите дату и время'),
+  capacity: z.number({ invalid_type_error: 'Укажите число мест' }).int().min(1, 'Минимум 1 место').max(30, 'Максимум 30 мест'),
+  priceRub: z.number({ invalid_type_error: 'Укажите цену' }).int().min(0, 'Не меньше 0').max(20000, 'Проверьте цену'),
+  sommelierId: z.string(),
+})
+export type SlotFormInput = z.infer<typeof slotFormSchema>
+export const slotPatchSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(['open', 'closed', 'cancelled']).optional(),
+  sommelier_id: z.number().nullable().optional(),
+})
+export const attendanceSchema = z.object({ id: z.string().min(1), status: z.enum(['registered', 'attended', 'no_show']) })

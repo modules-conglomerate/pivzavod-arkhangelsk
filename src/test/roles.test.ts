@@ -26,3 +26,12 @@ describe('матрица прав', () => {
     expect(rank('manager')).toBeGreaterThan(rank('sommelier'))
   })
 })
+
+describe('права на ракурсы', () => {
+  it('ракурсы создают менеджер и админ, отмечают посещения ещё и сомелье', () => {
+    expect(can('manager', 'rakurs:manage')).toBe(true)
+    expect(can('sommelier', 'rakurs:manage')).toBe(false)
+    expect(can('sommelier', 'rakurs:attend')).toBe(true)
+    expect(can('customer', 'rakurs:attend')).toBe(false)
+  })
+})

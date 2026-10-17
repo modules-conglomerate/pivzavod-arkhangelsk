@@ -40,7 +40,7 @@ export async function select<T>(table: string, where: Where = {}, o: { order?: s
 
 export async function insert<T>(table: string, row: Row): Promise<T> {
   if (!live) {
-    const withId = ['bookings', 'staff_applications', 'audit_log'].includes(table) ? { id: crypto.randomUUID() } : {}
+    const withId = ['bookings', 'staff_applications', 'audit_log', 'rakurs_slots', 'rakurs_signups'].includes(table) ? { id: crypto.randomUUID() } : {}
     const r = { ...withId, created_at: new Date().toISOString(), ...row }
     tbl(table).push(r)
     return r as T
@@ -83,6 +83,15 @@ export interface InviteRow {
 export interface BeerRow {
   id: string; name: string; style: string; family: string; abv: string; ibu: number; color: string; description: string
   tasting_notes: string | null; pairing: string | null; published: boolean; sort: number
+}
+
+export interface SlotRow {
+  id: string; title: string; starts_at: string; capacity: number; price_rub: number
+  sommelier_id: number | null; status: 'open' | 'closed' | 'cancelled'; created_by: number; created_at: string
+}
+export interface SignupRow {
+  id: string; slot_id: string; telegram_id: number; guests: number; set_beers: string[]; focus_beer: string
+  comment: string | null; status: 'registered' | 'attended' | 'no_show' | 'cancelled'; created_at: string
 }
 
 // ---------- обёртки ----------
