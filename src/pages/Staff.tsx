@@ -97,6 +97,7 @@ const tabs: { to: string; label: string; perm: Permission[] }[] = [
   { to: 'rakurs', label: 'Ракурсы', perm: ['rakurs:view'] },
   { to: 'beers', label: 'Пиво', perm: ['beers:notes'] },
   { to: 'users', label: 'Пользователи', perm: ['users:view'] },
+  { to: 'waitlist', label: 'Список ожидания', perm: ['users:view'] },
   { to: 'applications', label: 'Заявки персонала', perm: ['applications:review'] },
   { to: 'invites', label: 'Приглашения', perm: ['invites:manage'] },
 ]

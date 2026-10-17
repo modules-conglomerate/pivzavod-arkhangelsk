@@ -118,3 +118,12 @@ create table if not exists rakurs_signups (
 create unique index if not exists rakurs_one_active on rakurs_signups (slot_id, telegram_id) where status <> 'cancelled';
 alter table rakurs_slots enable row level security;
 alter table rakurs_signups enable row level security;
+
+-- ===== Список ожидания для заставки «Скоро открытие» =====
+create table if not exists waitlist (
+  id         uuid primary key default gen_random_uuid(),
+  contact    text not null unique,
+  kind       text not null check (kind in ('email','phone')),
+  created_at timestamptz not null default now()
+);
+alter table waitlist enable row level security;

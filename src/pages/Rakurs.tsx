@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { PageHead } from '../components/blocks'
+import { images } from '../content/images'
 import { cycleStages, rakursSteps } from '../content/rakurs'
 import { ApiError } from '../lib/api'
 import { buildPassport } from '../lib/achievements'
@@ -18,7 +19,7 @@ export function Rakurs() {
   const { data, error } = useResource<{ slots: RakursSlot[] }>('/api/rakurs')
   return (
     <>
-      <PageHead title="Ракурсы и дегустации" lead="Заводской ракурс: пройдите путь пива от зерна до бокала и соберите свой дегустационный сет." />
+      <PageHead title="Ракурсы и дегустации" lead="Заводской ракурс: пройдите путь пива от зерна до бокала и соберите свой дегустационный сет." image={images.copper} />
       <section className="wrap py-10">
         <h2 className="mb-5 text-3xl">Ближайшие даты</h2>
         {error && <p className="err" role="alert">{error}</p>}

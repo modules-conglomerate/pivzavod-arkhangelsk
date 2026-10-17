@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { BeerGrid, ContactCard, FeatureSplit, Hero, HistoryBlock, Identity, PageHead, Section, ShopGrid } from '../components/blocks'
+import { Banner, BeerGrid, ContactCard, FeatureSplit, Hero, HistoryBlock, Identity, PageHead, Section, ShopGrid } from '../components/blocks'
+import { images } from '../content/images'
 import { familyLabels, features, type BeerFamily } from '../content/site'
 import { useBeers } from '../lib/useBeers'
 
@@ -9,7 +10,7 @@ export function Home() {
     <>
       <Hero />
       <Identity />
-      <Section title="Наше пиво"><BeerGrid list={beers} /></Section>
+      <Section title="Наше пиво"><div className="mb-6"><Banner image={images.lineup} /></div><BeerGrid list={beers} /></Section>
       <FeatureSplit f={features.custom} />
       <FeatureSplit f={features.restaurant} flip />
       <FeatureSplit f={features.tours} />
@@ -22,7 +23,7 @@ export function Home() {
 
 export const About = () => (
   <>
-    <PageHead title="О нас" lead="История современности. Архангельский характер. Культура, вкус и люди." />
+    <PageHead title="О нас" lead="История современности. Архангельский характер. Культура, вкус и люди." image={images.hero} />
     <Identity />
     <HistoryBlock />
   </>
@@ -36,6 +37,7 @@ export function Beer() {
     <>
       <PageHead title="Наше пиво" lead="Варим на месте, из местной воды и отборного солода." />
       <section className="wrap py-12">
+        <div className="mb-8"><Banner image={images.lineup} /></div>
         <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Фильтр сортов">
           {(Object.keys(familyLabels) as (BeerFamily | 'all')[]).map((k) => (
             <button key={k} aria-pressed={family === k} onClick={() => setFamily(k)}
@@ -51,8 +53,8 @@ export function Beer() {
   )
 }
 
-export const Restaurant = () => (<><PageHead title="Ресторан" lead="Гастрономия с характером." /><FeatureSplit f={features.restaurant} /></>)
-export const Events = () => (<><PageHead title="События и пространства" /><FeatureSplit f={features.events} /></>)
+export const Restaurant = () => (<><PageHead title="Ресторан" lead="Гастрономия с характером." image={images.restaurant} /><FeatureSplit f={features.restaurant} /></>)
+export const Events = () => (<><PageHead title="События и пространства" image={images.entrance} /><FeatureSplit f={features.events} /></>)
 export const Shop = () => (<><PageHead title="Магазин и услуги" lead="Вкус, который можно забрать с собой." /><section className="wrap py-12"><ShopGrid /></section></>)
-export const Contacts = () => (<><PageHead title="Контакты" /><section className="wrap py-12"><ContactCard /></section></>)
+export const Contacts = () => (<><PageHead title="Контакты" image={images.entrance} /><section className="wrap py-12"><ContactCard /></section></>)
 export const NotFound = () => (<><PageHead title="Страница не найдена" lead="Проверьте адрес или вернитесь на главную." /></>)

@@ -61,3 +61,4 @@ export interface StaffSlot {
   status: 'open' | 'closed' | 'cancelled'; sommelier_id: number | null
   signups: (RakursSignup & { telegram_id: number; guest?: Person })[]
 }
+export interface WaitlistEntry { contact: string; kind: 'email' | 'phone'; created_at: string }

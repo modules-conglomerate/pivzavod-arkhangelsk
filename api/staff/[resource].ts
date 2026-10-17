@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomBytes } from 'node:crypto'
 import {
   insert, log, remove, select, update,
-  type ApplicationRow, type BeerRow, type BookingRow, type InviteRow, type SignupRow, type SlotRow, type UserRow,
+  type ApplicationRow, type BeerRow, type BookingRow, type InviteRow, type SignupRow, type SlotRow, type UserRow, type WaitlistRow,
 } from '../_lib/db'
 import { authorize } from '../_lib/guard'
 import { can, rank } from '../../src/lib/roles'
@@ -25,6 +25,7 @@ export default async function handler(req: Req, res: Res) {
       case 'invites': return await invites(req, res)
       case 'beers': return await beers(req, res)
       case 'slots': return await slots(req, res)
+      case 'waitlist': return await waitlist(req, res)
       case 'attendance': return await attendance(req, res)
       default: return bad(res, 'Не найдено', 404)
     }
@@ -226,4 +227,11 @@ async function attendance(req: Req, res: Res) {
   const [signup] = await update<SignupRow>('rakurs_signups', { id: row.id }, { status: p.data.status })
   await log(me.telegram_id, `attendance_${p.data.status}`, row.id)
   return res.json({ signup })
+}
+
+async function waitlist(req: Req, res: Res) {
+  const me = await authorize(req, res, 'users:view')
+  if (!me) return
+  if (req.method !== 'GET') return res.status(405).end()
+  return res.json({ entries: await select<WaitlistRow>('waitlist', {}, { order: 'created_at', desc: true }) })
 }

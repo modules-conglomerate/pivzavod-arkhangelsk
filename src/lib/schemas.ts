@@ -115,3 +115,20 @@ export const slotPatchSchema = z.object({
   sommelier_id: z.number().nullable().optional(),
 })
 export const attendanceSchema = z.object({ id: z.string().min(1), status: z.enum(['registered', 'attended', 'no_show']) })
+
+/** Список ожидания: почта или телефон. Возвращает нормализованный контакт либо null. */
+export function normalizeContact(raw: string): { kind: 'email' | 'phone'; value: string } | null {
+  const s = raw.trim()
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return { kind: 'email', value: s.toLowerCase() }
+  let d = s.replace(/[^\d]/g, '')
+  if (d.length === 11 && d.startsWith('8')) d = `7${d.slice(1)}`
+  if (/^[+\d][\d\s()-]+$/.test(s) && d.length >= 10 && d.length <= 15) return { kind: 'phone', value: `+${d}` }
+  return null
+}
+export const waitlistSchema = z.object({
+  contact: z.string().trim().min(5, 'Укажите почту или телефон').max(120, 'Слишком длинное значение')
+    .refine((c) => normalizeContact(c) !== null, 'Введите почту или телефон полностью'),
+  consent: z.boolean().refine((v) => v, 'Нужно согласие на обработку данных'),
+  website: z.string().optional(), // ловушка для ботов: люди это поле не видят
+})
+export type WaitlistInput = z.infer<typeof waitlistSchema>

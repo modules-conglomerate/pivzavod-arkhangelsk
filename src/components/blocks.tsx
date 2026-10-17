@@ -1,14 +1,21 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { Skyline } from './Skyline'
+import { Photo } from './Photo'
+import { images, type Img } from '../content/images'
 import { beers, contacts, history, shopItems, type BeerItem, type Feature } from '../content/site'
 
-export function PageHead({ title, lead }: { title: string; lead?: string }) {
+export function PageHead({ title, lead, image }: { title: string; lead?: string; image?: Img }) {
   return (
-    <div className="bg-plum text-ivory">
-      <div className="wrap py-14">
+    <div className="relative overflow-hidden bg-plum text-ivory">
+      {image && (
+        <>
+          <Photo image={image} priority className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-burgundy/90 via-burgundy/65 to-burgundy/25" />
+        </>
+      )}
+      <div className={`wrap relative ${image ? 'py-16 md:py-24' : 'py-14'}`}>
         <h1 className="text-4xl md:text-5xl">{title}</h1>
-        {lead && <p className="mt-3 max-w-xl text-ivory/80">{lead}</p>}
+        {lead && <p className="mt-3 max-w-xl text-ivory/85">{lead}</p>}
       </div>
     </div>
   )
@@ -16,15 +23,25 @@ export function PageHead({ title, lead }: { title: string; lead?: string }) {
 
 export function Hero() {
   return (
-    <div className="relative flex min-h-[560px] items-end overflow-hidden bg-gradient-to-b from-[#1b1420] via-plum to-brick text-ivory">
-      <Skyline className="absolute bottom-0 right-0 w-full max-w-4xl" />
-      <p className="absolute right-6 top-8 text-right text-[11px] uppercase leading-7 tracking-[0.16em] text-gold">Старинные стены.<br />Новые вкусы.<br />С 1898</p>
+    <div className="relative flex min-h-[600px] items-end overflow-hidden bg-burgundy text-ivory md:min-h-[680px]">
+      <Photo image={images.hero} priority className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-r from-burgundy/90 via-burgundy/45 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-burgundy/80 to-transparent" />
+      <p className="absolute right-6 top-8 text-right text-[11px] uppercase leading-7 tracking-[0.16em] text-gold drop-shadow">Старинные стены.<br />Новые вкусы.<br />С 1898</p>
       <div className="wrap relative w-full pb-16 pt-24">
         <h1 className="max-w-xl text-5xl uppercase md:text-7xl">История современности</h1>
         <p className="mt-5 max-w-md font-serif text-xl">Пивной ресторан и креативный кластер в историческом Архангельске</p>
-        <Link to="/about" className="btn-ghost mt-7">Исследовать пространство</Link>
+        <Link to="/about" className="btn-ghost mt-7 bg-burgundy/40 backdrop-blur-sm">Исследовать пространство</Link>
       </div>
     </div>
+  )
+}
+
+export function Banner({ image }: { image: Img }) {
+  return (
+    <figure className="overflow-hidden border border-burgundy/20 bg-charcoal">
+      <Photo image={image} sizes="(min-width:1280px) 1176px, 100vw" className="h-auto min-h-28 w-full object-cover" />
+    </figure>
   )
 }
 
@@ -83,7 +100,10 @@ export function FeatureSplit({ f, flip = false }: { f: Feature; flip?: boolean }
           </ul>
           <Link to={f.cta.to} className={dark ? 'btn-gold' : 'btn-dark'}>{f.cta.label}</Link>
         </div>
-        <div className="grid aspect-[4/3] place-items-center border border-gold bg-gradient-to-br from-brick to-burgundy p-6 text-center font-serif text-2xl italic text-gold">{f.visual}</div>
+        <figure className="relative aspect-[4/3] overflow-hidden border border-gold bg-charcoal">
+          <Photo image={images[f.image]} sizes="(min-width:768px) 560px, 100vw" className="h-full w-full object-cover" />
+          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-burgundy/95 to-transparent p-4 pt-12 font-serif text-lg italic text-gold">{f.visual}</figcaption>
+        </figure>
       </div>
     </section>
   )

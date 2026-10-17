@@ -40,7 +40,7 @@ export async function select<T>(table: string, where: Where = {}, o: { order?: s
 
 export async function insert<T>(table: string, row: Row): Promise<T> {
   if (!live) {
-    const withId = ['bookings', 'staff_applications', 'audit_log', 'rakurs_slots', 'rakurs_signups'].includes(table) ? { id: crypto.randomUUID() } : {}
+    const withId = ['bookings', 'staff_applications', 'audit_log', 'rakurs_slots', 'rakurs_signups', 'waitlist'].includes(table) ? { id: crypto.randomUUID() } : {}
     const r = { ...withId, created_at: new Date().toISOString(), ...row }
     tbl(table).push(r)
     return r as T
@@ -108,3 +108,5 @@ export const createBooking = (b: Row) => insert<BookingRow>('bookings', { status
 export const listBookings = (id: number) => select<BookingRow>('bookings', { telegram_id: id }, { order: 'created_at', desc: true })
 export const log = (actor: number, action: string, target: string, meta: Row = {}) =>
   insert('audit_log', { actor, action, target, meta }).catch(() => undefined)
+
+export interface WaitlistRow { id?: string; contact: string; kind: 'email' | 'phone'; created_at: string }
